@@ -60,3 +60,49 @@ private byte[] getBytesFromStaticFile(String path) throws IOException {
 ### 개선점
 
 1. 첫번째 라인을 확인하기 위해 lineCount라는 변수를 사용했는데, 0일 때만 확인해서, 첫번째 url 추출하는 부분은 따로 처리하는 게 나은지에 대한 방법 고안해야 한다.
+
+## 요구사항 2: ****GET으로 회원가입 기능 구현****
+
+> “회원가입” 메뉴를 클릭하면 http://localhost:8080/user/form.html 으로 이동하면서 회원가입 폼을 표시한다. 이 폼을 통해서 회원가입을 할 수 있다.회원가입을 하면 다음과 같은 형태로 사용자가 입력한 값이 서버에 전달된다.
+>
+
+```
+/create?userId=javajigi&password=password&name=%EB%B0%95%EC%9E%AC%EC%84%B1&email=javajigi%40slipp.net
+```
+
+> HTML과 URL을 비교해 보고 사용자가 입력한 값을 파싱해 model.User 클래스에 저장한다.
+>
+
+### 로직
+
+1. 기존 코드에서 HttpRequest 클래스를 구현해 request에 관한 값을 처리한다.
+2. 이 때 해당 인스턴스를 만들기 위해 이를 파싱해주는 RequestParser를 사용한다.
+3. 인스턴스가 생성되면 해당 내부에 있는 필드 값인 path값을 통해 User 클래스에 값을 저장한다.
+
+```java
+// RequestHandler.java
+HttpRequest httpRequest = RequestParser.getHttpRequestFromInput(br.readLine());
+byte[] body = processRequest(httpRequest);
+```
+
+```java
+private byte[] processRequest(HttpRequest httpRequest) throws IOException {
+
+	if (httpRequest.getPath().equals("/user/create")){
+	    String userId = httpRequest.getParameters().get("userId");
+	    String password = httpRequest.getParameters().get("password");
+	    String name = httpRequest.getParameters().get("name");
+	    String email = httpRequest.getParameters().get("email");
+	
+	    User user = new User(userId, password, name, email);
+	
+	    logger.debug("CreateUserRequest UserInfo: {}", user);
+	}
+	
+	return getBytesFromFilePath(httpRequest.getPath());
+	}
+```
+
+### 개선점
+
+1. 뭔가 지저분해보인다. 변수 변경 등이 필요하다.
