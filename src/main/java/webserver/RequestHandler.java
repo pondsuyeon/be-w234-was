@@ -2,8 +2,10 @@ package webserver;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,30 +23,12 @@ public class RequestHandler implements Runnable {
                 connection.getPort());
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+            BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             DataOutputStream dos = new DataOutputStream(out);
 
-            byte[] body = new byte[8192];
-            String line = "";
-            int lineCount = 0;
-
-            logger.debug("--------Request Header--------");
-
-            while (true) {
-                line = br.readLine();
-                if (line == null || "".equals(line)) break;
-
-                logger.debug("Line: {}", line);
-
-                if (lineCount == 0) {
-                    String path = line.split(" ")[1];
-                    logger.debug("Path: {}", path);
-
-                    body = getBytesFromStaticFile(path);
-                }
-
-                lineCount++;
-            }
+            HttpRequest httpRequest = RequestParser.getHttpRequestFromInput(br.readLine());
+            // TODO 메서드 명 변경
+            byte[] body = processRequest(httpRequest);
 
             response200Header(dos, body.length);
             responseBody(dos, body);
@@ -52,16 +36,27 @@ public class RequestHandler implements Runnable {
             logger.error(e.getMessage());
         }
     }
+    private byte[] processRequest(HttpRequest httpRequest) throws IOException {
 
-    private byte[] getBytesFromStaticFile(String path) throws IOException {
-        byte[] bytes = new byte[8192];
-        try {
-            bytes = Files.readAllBytes(new File("./webapp" + path).toPath());
-        } catch (Exception e) {
-            bytes = Files.readAllBytes(new File("./webapp" + "/error_not_found.html").toPath());
+        if (httpRequest.getPath().equals("/user/create")){
+            String userId = httpRequest.getParameters().get("userId");
+            String password = httpRequest.getParameters().get("password");
+            String name = httpRequest.getParameters().get("name");
+            String email = httpRequest.getParameters().get("email");
+
+            User user = new User(userId, password, name, email);
+
+            logger.debug("CreateUserRequest UserInfo: {}", user);
         }
 
-        return bytes;
+        return getBytesFromFilePath(httpRequest.getPath());
+    }
+    private byte[] getBytesFromFilePath(String path) throws IOException {
+        try {
+            return Files.readAllBytes(new File("./webapp" + path).toPath());
+        } catch (Exception e) {
+           return Files.readAllBytes(new File("./webapp" + "/error_not_found.html").toPath());
+        }
     }
 
     private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
