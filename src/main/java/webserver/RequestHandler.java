@@ -4,6 +4,9 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import model.User;
 import org.slf4j.Logger;
@@ -26,16 +29,30 @@ public class RequestHandler implements Runnable {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             DataOutputStream dos = new DataOutputStream(out);
 
-            HttpRequest httpRequest = RequestParser.getHttpRequestFromInput(br.readLine());
-            // TODO 메서드 명 변경
+            HttpRequest httpRequest = getHttpRequestFromInput(br);
             byte[] body = processRequest(httpRequest);
 
-            response200Header(dos, body.length);
+            response200Header(dos, body.length, httpRequest);
             responseBody(dos, body);
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
     }
+
+    private HttpRequest getHttpRequestFromInput(BufferedReader br) throws IOException {
+        String startLine = br.readLine();
+        List<String> headerLines = new ArrayList<>();
+
+        String line = "";
+        while (true) {
+            line = br.readLine();
+            if (line == null || "".equals(line)) break;
+            headerLines.add(line);
+        }
+        return RequestParser.getHttpRequestFromInput(startLine, headerLines);
+    }
+
+    // TODO 메서드 명 변경
     private byte[] processRequest(HttpRequest httpRequest) throws IOException {
 
         if (httpRequest.getPath().equals("/user/create")){
@@ -59,10 +76,10 @@ public class RequestHandler implements Runnable {
         }
     }
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
+    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, HttpRequest httpRequest) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Type: "+getContentTypeByRequest(httpRequest)+";charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
@@ -76,6 +93,20 @@ public class RequestHandler implements Runnable {
             dos.flush();
         } catch (IOException e) {
             logger.error(e.getMessage());
+        }
+    }
+
+    private String getContentTypeByRequest(HttpRequest httpRequest) {
+        // TODO 추후에 정적 파일이 아닐 경우 따로 처리 필요
+        String ext = httpRequest.getPath().substring(httpRequest.getPath().lastIndexOf(".") + 1);
+
+        switch (ext){
+            case "html":
+                return "text/html";
+            case "css":
+                return "text/css";
+            default:
+                return "text/html";
         }
     }
 }

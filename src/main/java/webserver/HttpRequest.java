@@ -9,12 +9,14 @@ public class HttpRequest {
     private String path;
     private String protocol;
     private Map<String, String> parameters;
+    private Map<String, String> headers;
 
-    public HttpRequest(Method method, String path, String protocol, Map<String, String> parameters) {
+    public HttpRequest(Method method, String path, String protocol, Map<String, String> parameters, Map<String, String> headers) {
         this.method = method;
         this.path = path;
         this.protocol = protocol;
         this.parameters = parameters;
+        this.headers = headers;
     }
 
     public Method getMethod() {

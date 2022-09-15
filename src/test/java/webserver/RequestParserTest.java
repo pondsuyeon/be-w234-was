@@ -16,7 +16,7 @@ class RequestParserTest {
 
         String startLine = "GET /user/create?userId=lucy.ji&password=1234&name=lucy&email=lucy.ji@kakaocorp.com HTTP/1.1";
 
-        HttpRequest actualRequest = RequestParser.getHttpRequestFromInput(startLine);
+        HttpRequest actualRequest = RequestParser.getHttpRequestFromInput(startLine, null);
         HttpRequest expectedRequest = initExpectedRequest();
 
         assertThat(actualRequest)
@@ -30,6 +30,6 @@ class RequestParserTest {
         parameters.put("name", "lucy");
         parameters.put("email", "lucy.ji@kakaocorp.com");
 
-        return new HttpRequest(Method.GET, "/user/create", "HTTP/1.1", parameters);
+        return new HttpRequest(Method.GET, "/user/create", "HTTP/1.1", parameters, null);
     }
 }
