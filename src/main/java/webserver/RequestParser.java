@@ -4,20 +4,40 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RequestParser {
     private static final Logger logger = LoggerFactory.getLogger(RequestParser.class);
-    public static HttpRequest getHttpRequestFromInput(String startLine, List<String> headerLines) {
+    public static HttpRequest getHttpRequestFromInput(BufferedReader br) throws IOException {
 
         Method method = null;
         String path = null;
         String protocol = null;
+
         Map<String, String> parameters = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
+        Map<String, String> body = new HashMap<>();
+
+        String startLine = null;
+        List<String> headerLines = new ArrayList<>();
+        String bodyData = null;
+
+        String rawLine = null;
+
+        startLine = br.readLine();
+
+        while (true) {
+            rawLine = br.readLine();
+            if (rawLine == null || "".equals(rawLine)) break;
+            headerLines.add(rawLine);
+        }
 
         if (Strings.isNullOrEmpty(startLine))
             throw new RequestHandlingException("Header 입력이 비어있습니다.");
@@ -43,6 +63,14 @@ public class RequestParser {
             headers.put(pair.getKey(), pair.getValue());
         });
 
-        return new HttpRequest(method, path, protocol, parameters, headers);
+        try {
+            bodyData = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
+            body = HttpRequestUtils.parseQueryString(bodyData);
+
+        } catch (Exception e) {
+
+        }
+
+        return new HttpRequest(method, path, protocol, parameters, headers, body);
     }
 }

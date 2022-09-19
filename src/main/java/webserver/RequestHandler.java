@@ -4,11 +4,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,84 +25,76 @@ public class RequestHandler implements Runnable {
             BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             DataOutputStream dos = new DataOutputStream(out);
 
-            HttpRequest httpRequest = getHttpRequestFromInput(br);
-            byte[] body = processRequest(httpRequest);
+            HttpRequest httpRequest = RequestParser.getHttpRequestFromInput(br);
+            HttpResponse httpResponse = processRequest(httpRequest);
 
-            response200Header(dos, body.length, httpRequest);
-            responseBody(dos, body);
+            writeResponse(dos, httpResponse);
+
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
     }
 
-    private HttpRequest getHttpRequestFromInput(BufferedReader br) throws IOException {
-        String startLine = br.readLine();
-        List<String> headerLines = new ArrayList<>();
+    private HttpResponse processRequest(HttpRequest httpRequest) throws IOException {
 
-        String line = "";
-        while (true) {
-            line = br.readLine();
-            if (line == null || "".equals(line)) break;
-            headerLines.add(line);
-        }
-        return RequestParser.getHttpRequestFromInput(startLine, headerLines);
-    }
+        HttpResponse httpResponse = null;
+        String requestHeaderAccept = httpRequest.getHeaders().get("Accept");
 
-    // TODO 메서드 명 변경
-    private byte[] processRequest(HttpRequest httpRequest) throws IOException {
+        if (isStaticFile(httpRequest.getPath())) {
+            httpResponse = new HttpResponse(StatusCode.OK, getBytesFromFilePath(httpRequest.getPath()), requestHeaderAccept);
+        } else if (httpRequest.getPath().equals("/user/create")) {
 
-        if (httpRequest.getPath().equals("/user/create")){
-            String userId = httpRequest.getParameters().get("userId");
-            String password = httpRequest.getParameters().get("password");
-            String name = httpRequest.getParameters().get("name");
-            String email = httpRequest.getParameters().get("email");
+            UserController userController = UserController.getInstance();
 
-            User user = new User(userId, password, name, email);
+            if (httpRequest.getMethod() == Method.GET) {
+                userController.createUserWithGet(httpRequest);
+            } else if (httpRequest.getMethod() == Method.POST) {
+                userController.createUserWithPost(httpRequest);
+            }
 
-            logger.debug("CreateUserRequest UserInfo: {}", user);
+            httpResponse = new HttpResponse(StatusCode.FOUND, "http://"+httpRequest.getHeaders().get("Host")+"/index.html", requestHeaderAccept);
+        } else {
+            httpResponse = new HttpResponse(StatusCode.NOT_FOUND, getBytesFromFilePath("/error_not_found.html"), requestHeaderAccept);
         }
 
-        return getBytesFromFilePath(httpRequest.getPath());
+        return httpResponse;
     }
-    private byte[] getBytesFromFilePath(String path) throws IOException {
+    private void writeResponse(DataOutputStream dos, HttpResponse httpResponse) {
+        responseHeader(dos, httpResponse);
+        responseBody(dos, httpResponse);
+    }
+
+    private void responseHeader(DataOutputStream dos, HttpResponse httpResponse) {
         try {
-            return Files.readAllBytes(new File("./webapp" + path).toPath());
-        } catch (Exception e) {
-           return Files.readAllBytes(new File("./webapp" + "/error_not_found.html").toPath());
-        }
-    }
+            dos.writeBytes(httpResponse.getProtocol() + " " + httpResponse.getStatusCode().getStatus() + " " + httpResponse.getStatusCode().getMessage() + "\r\n");
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, HttpRequest httpRequest) {
-        try {
-            dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: "+getContentTypeByRequest(httpRequest)+";charset=utf-8\r\n");
-            dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
-            dos.writeBytes("\r\n");
+            if (httpResponse.getStatusCode() == StatusCode.OK) {
+                dos.writeBytes("Content-Type: " + httpResponse.getHeaders().get("Content-Type") + ";charset=utf-8\r\n");
+                dos.writeBytes("Content-Length: " + httpResponse.getBody().length + "\r\n");
+                dos.writeBytes("\r\n");
+            } else if (httpResponse.getStatusCode() == StatusCode.FOUND) {
+                dos.writeBytes("Location: "+ httpResponse.getRedirectUrl());
+            }
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
     }
 
-    private void responseBody(DataOutputStream dos, byte[] body) {
+    private void responseBody(DataOutputStream dos, HttpResponse httpResponse) {
         try {
-            dos.write(body, 0, body.length);
+            dos.write(httpResponse.getBody());
             dos.flush();
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
     }
 
-    private String getContentTypeByRequest(HttpRequest httpRequest) {
-        // TODO 추후에 정적 파일이 아닐 경우 따로 처리 필요
-        String ext = httpRequest.getPath().substring(httpRequest.getPath().lastIndexOf(".") + 1);
+    private boolean isStaticFile(String path) {
+        File file = new File("./webapp" + path);
+        return file.exists() && file.isFile();
+    }
 
-        switch (ext){
-            case "html":
-                return "text/html";
-            case "css":
-                return "text/css";
-            default:
-                return "text/html";
-        }
+    private byte[] getBytesFromFilePath(String path) throws IOException {
+        return Files.readAllBytes(new File("./webapp" + path).toPath());
     }
 }
