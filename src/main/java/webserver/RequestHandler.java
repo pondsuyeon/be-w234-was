@@ -1,11 +1,14 @@
 package webserver;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,20 +26,60 @@ public class RequestHandler implements Runnable {
                 connection.getPort());
 
         try (InputStream in = connection.getInputStream(); OutputStream out = connection.getOutputStream()) {
-            // TODO 사용자 요청에 대한 처리는 이 곳에 구현하면 된다.
+            BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             DataOutputStream dos = new DataOutputStream(out);
-            byte[] body = "Hello World".getBytes();
-            response200Header(dos, body.length);
+
+            HttpRequest httpRequest = getHttpRequestFromInput(br);
+            byte[] body = processRequest(httpRequest);
+
+            response200Header(dos, body.length, httpRequest);
             responseBody(dos, body);
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
     }
 
-    private void response200Header(DataOutputStream dos, int lengthOfBodyContent) {
+    private HttpRequest getHttpRequestFromInput(BufferedReader br) throws IOException {
+        String startLine = br.readLine();
+        List<String> headerLines = new ArrayList<>();
+
+        String line = "";
+        while (true) {
+            line = br.readLine();
+            if (line == null || "".equals(line)) break;
+            headerLines.add(line);
+        }
+        return RequestParser.getHttpRequestFromInput(startLine, headerLines);
+    }
+
+    // TODO 메서드 명 변경
+    private byte[] processRequest(HttpRequest httpRequest) throws IOException {
+
+        if (httpRequest.getPath().equals("/user/create")){
+            String userId = httpRequest.getParameters().get("userId");
+            String password = httpRequest.getParameters().get("password");
+            String name = httpRequest.getParameters().get("name");
+            String email = httpRequest.getParameters().get("email");
+
+            User user = new User(userId, password, name, email);
+
+            logger.debug("CreateUserRequest UserInfo: {}", user);
+        }
+
+        return getBytesFromFilePath(httpRequest.getPath());
+    }
+    private byte[] getBytesFromFilePath(String path) throws IOException {
+        try {
+            return Files.readAllBytes(new File("./webapp" + path).toPath());
+        } catch (Exception e) {
+           return Files.readAllBytes(new File("./webapp" + "/error_not_found.html").toPath());
+        }
+    }
+
+    private void response200Header(DataOutputStream dos, int lengthOfBodyContent, HttpRequest httpRequest) {
         try {
             dos.writeBytes("HTTP/1.1 200 OK \r\n");
-            dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
+            dos.writeBytes("Content-Type: "+getContentTypeByRequest(httpRequest)+";charset=utf-8\r\n");
             dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
             dos.writeBytes("\r\n");
         } catch (IOException e) {
@@ -50,6 +93,20 @@ public class RequestHandler implements Runnable {
             dos.flush();
         } catch (IOException e) {
             logger.error(e.getMessage());
+        }
+    }
+
+    private String getContentTypeByRequest(HttpRequest httpRequest) {
+        // TODO 추후에 정적 파일이 아닐 경우 따로 처리 필요
+        String ext = httpRequest.getPath().substring(httpRequest.getPath().lastIndexOf(".") + 1);
+
+        switch (ext){
+            case "html":
+                return "text/html";
+            case "css":
+                return "text/css";
+            default:
+                return "text/html";
         }
     }
 }
