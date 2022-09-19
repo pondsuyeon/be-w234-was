@@ -49,5 +49,21 @@ Java Web Application Server 2022
 
 ### 개선점
 
-1. response 타입을 좀 더 클래스로 추상화해야 한다.
+1. ~~response 타입을 좀 더 클래스로 추상화해야 한다.~~
 2. 그래도.. 깨끗하지 못한……..
+
+
+## 요구사항 4: POST로 회원 가입 구현
+> http://localhost:8080/user/form.html 파일의 form 태그 method를 get에서 post로 수정한 후 회원가입 기능이 정상적으로 동작하도록 구현한다.가입 후 페이지 이동을 위해 redirection 기능을 구현한다.
+
+### 로직 순서
+
+1. form.html의 `method`를 `get`에서 `post`로 수정한다.
+2. RequestHandler.getHttpRequestFromInput 메서드에 body를 읽는 코드를 추가한다.
+3. processRequest에서 api request path에 따라 분기, controller가 처리한다.
+4. 응답 헤더와 바디를 작성한다.
+
+### 개선점
+1. 생성자 빌더 패턴으로 변환
+2. 하드 코딩 제거 enum or 추상화 등등
+3. 테스트 코드 작성
