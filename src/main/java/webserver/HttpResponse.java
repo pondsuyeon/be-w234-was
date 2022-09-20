@@ -7,24 +7,45 @@ public class HttpResponse {
     private final String protocol = "HTTP/1.1";
     private StatusCode statusCode;
     private Map<String, String> headers;
-    private byte[] body = new byte[0];
-    private String redirectUrl;
+    private byte[] body;
 
-    public HttpResponse(StatusCode statusCode, String requestHeaderAccept) {
-        this.statusCode = statusCode;
-        this.headers = new HashMap<>();
-        this.headers.put("Content-Type", getContentTypeFromRequest(requestHeaderAccept));
+    private HttpResponse(Builder builder) {
+        this.statusCode = builder.statusCode;
+        this.headers = builder.headers;
+        this.body = builder.body;
     }
 
+    public static class Builder {
+        private StatusCode statusCode;
+        private Map<String, String> headers = new HashMap<>();
+        private byte[] body = new byte[0];
 
+        public Builder(){
+            this.headers.put("Content-Type", getContentTypeFromRequest(""));
+        }
 
-    public HttpResponse(StatusCode statusCode, String redirectUrl, String requestHeaderAccept) {
-        this(statusCode, requestHeaderAccept);
-        this.redirectUrl = redirectUrl;
-    }
-    public HttpResponse(StatusCode statusCode, byte[] body, String requestHeaderAccept) {
-        this(statusCode, requestHeaderAccept);
-        this.body = body;
+        public Builder statusCode(StatusCode statusCode){
+            this.statusCode = statusCode;
+            return this;
+        }
+
+        public Builder headers(String key, String value){
+            this.headers.put(key, value);
+            return this;
+        }
+        public Builder body(byte[] body){
+            this.body = body;
+            this.headers.put("Content-Length", String.valueOf(body.length));
+            return this;
+        }
+        public Builder mime(String requestHeaderAccept){
+            this.headers.put("Content-Type", getContentTypeFromRequest(requestHeaderAccept) + ";charset=utf-8");
+            return this;
+        }
+        public HttpResponse build(){
+            return new HttpResponse(this);
+        }
+
     }
 
     public String getProtocol() {
@@ -43,10 +64,7 @@ public class HttpResponse {
         return headers;
     }
 
-    public String getRedirectUrl() {
-        return redirectUrl;
-    }
-    private String getContentTypeFromRequest(String requestHeaderAccept) {
+    private static String getContentTypeFromRequest(String requestHeaderAccept) {
         if (requestHeaderAccept.contains("text/css")) {
             return "text/css";
         }

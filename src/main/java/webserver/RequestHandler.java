@@ -3,8 +3,9 @@ package webserver;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
+import controller.StaticFileController;
+import controller.UserController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,26 +39,15 @@ public class RequestHandler implements Runnable {
     private HttpResponse processRequest(HttpRequest httpRequest) throws IOException {
 
         HttpResponse httpResponse = null;
-        String requestHeaderAccept = httpRequest.getHeaders().get("Accept");
 
-        if (isStaticFile(httpRequest.getPath())) {
-            httpResponse = new HttpResponse(StatusCode.OK, getBytesFromFilePath(httpRequest.getPath()), requestHeaderAccept);
-        } else if (httpRequest.getPath().equals("/user/create")) {
-
-            UserController userController = UserController.getInstance();
-
-            if (httpRequest.getMethod() == Method.GET) {
-                userController.createUserWithGet(httpRequest);
-            } else if (httpRequest.getMethod() == Method.POST) {
-                userController.createUserWithPost(httpRequest);
-            }
-
-            httpResponse = new HttpResponse(StatusCode.FOUND, "http://"+httpRequest.getHeaders().get("Host")+"/index.html", requestHeaderAccept);
-        } else {
-            httpResponse = new HttpResponse(StatusCode.NOT_FOUND, getBytesFromFilePath("/error_not_found.html"), requestHeaderAccept);
+        if (httpRequest.getPath().startsWith("/user")) {
+            httpResponse = UserController.getInstance().process(httpRequest);
         }
 
-        return httpResponse;
+        if (httpResponse != null)
+            return httpResponse;
+
+        return StaticFileController.getInstance().process(httpRequest);
     }
     private void writeResponse(DataOutputStream dos, HttpResponse httpResponse) {
         responseHeader(dos, httpResponse);
@@ -68,13 +58,11 @@ public class RequestHandler implements Runnable {
         try {
             dos.writeBytes(httpResponse.getProtocol() + " " + httpResponse.getStatusCode().getStatus() + " " + httpResponse.getStatusCode().getMessage() + "\r\n");
 
-            if (httpResponse.getStatusCode() == StatusCode.OK) {
-                dos.writeBytes("Content-Type: " + httpResponse.getHeaders().get("Content-Type") + ";charset=utf-8\r\n");
-                dos.writeBytes("Content-Length: " + httpResponse.getBody().length + "\r\n");
-                dos.writeBytes("\r\n");
-            } else if (httpResponse.getStatusCode() == StatusCode.FOUND) {
-                dos.writeBytes("Location: "+ httpResponse.getRedirectUrl());
+            for (String key : httpResponse.getHeaders().keySet()){
+                String value = httpResponse.getHeaders().get(key);
+                dos.writeBytes(key+": " + value+"\r\n");
             }
+                dos.writeBytes("\r\n");
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
@@ -89,12 +77,4 @@ public class RequestHandler implements Runnable {
         }
     }
 
-    private boolean isStaticFile(String path) {
-        File file = new File("./webapp" + path);
-        return file.exists() && file.isFile();
-    }
-
-    private byte[] getBytesFromFilePath(String path) throws IOException {
-        return Files.readAllBytes(new File("./webapp" + path).toPath());
-    }
 }
