@@ -64,6 +64,28 @@ Java Web Application Server 2022
 4. 응답 헤더와 바디를 작성한다.
 
 ### 개선점
-1. 생성자 빌더 패턴으로 변환
+1. ~~생성자 빌더 패턴으로 변환~~
 2. 하드 코딩 제거 enum or 추상화 등등
 3. 테스트 코드 작성
+
+## **요구사항 5: Cookie를 이용한 로그인 구현**
+
+> “로그인” 메뉴를 클릭하면 http://localhost:8080/user/login.html 으로 이동해 로그인할 수 있다. 로그인이 성공하면 index.html로 이동하고, 로그인이 실패하면 /user/login_failed.html로 이동해야 한다.
+>
+>
+> 앞에서 회원가입한 사용자로 로그인할 수 있어야 한다. 로그인이 성공하면 cookie를 활용해 로그인 상태를 유지할 수 있어야 한다. 로그인이 성공할 경우 요청 header의 Cookie header 값이 logined=true, 로그인이 실패하면 Cookie header 값이 logined=false로 전달되어야 한다.
+>
+
+### 로직 순서
+
+1. api 요청이 들어오면 RequestHandler의 run을 거쳐 processRequest가 실행된다.
+2. 이 때 url에 따라 각각에 맞는 Controller의 process를 실행하도록 한다.
+3. 로그인의 경우 UserController로 이관한다.
+4. UserController는 각 요청에 필요한 파라미터 값을 파싱한 후, UserService에 넘긴다.
+5. UserService는 DB와 관련된 작업을 한 후 필요에 따라 값을 반환한다.
+6. Controller는 반환된 값을 사용해 HttpResponse 객체를 만들어 반환한다.
+
+### 개선점
+
+1. 헤더 값 부여하는 부분, 에러 코드, 메세지 등이 아직 분리되지 않았다.
+2. 뭔가 하드코딩이 되어가는 느낌
