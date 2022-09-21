@@ -56,7 +56,7 @@ public class UserController {
                 .build();
     }
 
-    public HttpResponse login(HttpRequest httpRequest) throws IOException {
+    public HttpResponse login(HttpRequest httpRequest) {
 
         String userId = httpRequest.getBody().get("userId");
         String password = httpRequest.getBody().get("password");

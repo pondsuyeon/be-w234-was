@@ -1,6 +1,7 @@
 package service;
 
 import db.Database;
+import exception.DuplicateUserException;
 import exception.LoginFailException;
 import exception.UserNotFoundException;
 import model.User;
@@ -27,6 +28,10 @@ public class UserService {
                 .name(name).email(email)
                 .build();
 
+        if (Database.findUserById(userId) != null){
+            throw new DuplicateUserException("ID가 중복되었습니다.");
+        }
+
         Database.addUser(user);
 
         return user;
@@ -45,5 +50,10 @@ public class UserService {
         }
 
         return true;
+    }
+
+    public void deleteUser(String userId){
+
+        Database.deleteUser(userId);
     }
 }
