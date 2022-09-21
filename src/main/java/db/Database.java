@@ -2,6 +2,7 @@ package db;
 
 import com.google.common.collect.Maps;
 
+import exception.UserNotFoundException;
 import model.User;
 
 import java.util.Collection;
@@ -20,5 +21,13 @@ public class Database {
 
     public static Collection<User> findAll() {
         return users.values();
+    }
+
+    public static void deleteUser(String userId){
+        if (!users.containsKey(userId)){
+            throw new UserNotFoundException("일치하는 사용자 ID가 없습니다.");
+        }
+
+        users.remove(userId);
     }
 }
