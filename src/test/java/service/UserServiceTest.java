@@ -4,9 +4,12 @@ import db.Database;
 import exception.DuplicateUserException;
 import exception.LoginFailException;
 import exception.UserNotFoundException;
+import model.User;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,6 +19,7 @@ class UserServiceTest {
     void deleteUser(){
         try {
             UserService.getInstance().deleteUser("abc");
+            UserService.getInstance().deleteUser("cde");
         }catch (Exception e) {
 
         }
@@ -82,12 +86,33 @@ class UserServiceTest {
                 UserService.getInstance().login(userId, password));
     }
 
+    @Test
+    @DisplayName("가입한 사용자 목록 테스트")
+    void userAllList(){
+
+        createUserBeforeTest();
+
+        List<User> userList = UserService.getInstance().getUserList();
+        assertEquals(userList.size(), 2);
+        assertTrue(userList.stream().anyMatch(user -> user.getUserId().equals("abc")));
+        assertTrue(userList.stream().anyMatch(user -> user.getUserId().equals("cde")));
+
+    }
+
+
     void createUserBeforeTest(){
 
         String userId = "abc";
         String password = "123";
         String name = "hello_abc";
         String email = "abc@abc.com";
+
+        UserService.getInstance().createUser(userId, password, name, email);
+
+        userId = "cde";
+        password = "456";
+        name = "hello_cde";
+        email = "cde@cde.com";
 
         UserService.getInstance().createUser(userId, password, name, email);
     }
