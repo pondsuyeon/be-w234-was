@@ -19,7 +19,7 @@ Java Web Application Server 2022
 
 ### 개선점
 
-1. ~~첫번째 라인을 확인하기 위해 lineCount라는 변수를 사용했는데, 0일 때만 확인해서, 첫번째 url 추출하는 부분은 따로 처리하는 게 나은지에 대한 방법 고안해야 한다.~~ -> step2에서 리팩토링, 시작줄은 따로 처가
+1. ~~첫번째 라인을 확인하기 위해 lineCount라는 변수를 사용했는데, 0일 때만 확인해서, 첫번째 url 추출하는 부분은 따로 처리하는 게 나은지에 대한 방법 고안해야 한다.~~ -> step2에서 리팩토링, 시작줄은 따로 처리
 
 ```
 /create?userId=javajigi&password=password&name=%EB%B0%95%EC%9E%AC%EC%84%B1&email=javajigi%40slipp.net
@@ -89,3 +89,14 @@ Java Web Application Server 2022
 
 1. 헤더 값 부여하는 부분, 에러 코드, 메세지 등이 아직 분리되지 않았다.
 2. 뭔가 하드코딩이 되어가는 느낌
+
+## **요구사항 6: 동적인 html 구현**
+
+> 접근하고 있는 사용자가 “로그인” 상태일 경우(Cookie 값이 logined=true) 경우 http://localhost:8080/user/list 에서 사용자 목록을 출력한다.만약 로그인하지 않은 상태라면 로그인 페이지(login.html)로 이동한다.
+>
+
+### 로직순서
+
+1. Controller에서 HttpRequest Header에 Cookie 값이 `logined=true` 인지 여부에 따라 아닐 경우 /user/login.html로 리다이렉션 한다.
+2. `logined=true` 값인 경우 Service에서 사용자 목록을 가져온 후 StringBuilde를 활용해 HTML을 구성한다.
+3. Service에서는 이미 만들어둔 Database에서 사용자 목록을 가져온다.

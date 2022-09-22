@@ -5,8 +5,12 @@ import exception.DuplicateUserException;
 import exception.LoginFailException;
 import exception.UserNotFoundException;
 import model.User;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -28,7 +32,7 @@ public class UserService {
                 .name(name).email(email)
                 .build();
 
-        if (Database.findUserById(userId) != null){
+        if (Database.findUserById(userId) != null) {
             throw new DuplicateUserException("ID가 중복되었습니다.");
         }
 
@@ -52,8 +56,12 @@ public class UserService {
         return true;
     }
 
-    public void deleteUser(String userId){
+    public void deleteUser(String userId) {
 
         Database.deleteUser(userId);
+    }
+
+    public List<User> getUserList() {
+        return new ArrayList<>(Database.findAll());
     }
 }
