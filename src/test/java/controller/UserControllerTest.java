@@ -1,5 +1,6 @@
 package controller;
 
+import dto.JoinUserDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import webserver.HttpResponse;
 import webserver.Method;
 import webserver.StatusCode;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,7 +43,7 @@ class UserControllerTest {
 
         HttpRequest httpRequest = new HttpRequest(method, path, protocol, parameters, headers, body);
 
-        UserController.getInstance().createUserWithPost(httpRequest);
+        UserController.getInstance().createUser(httpRequest);
     }
 
     @Test
@@ -115,7 +117,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("로그인이 되어있을 경우 사용자 목록 반환 테스트")
-    void getAllUserList(){
+    void getAllUserList() throws IOException {
         Method method = Method.GET;
         String path = "/user/list";
         String protocol = "HTTP/1.1";
@@ -134,7 +136,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("로그인이 안 되어있을 경우 사용자 목록 반환 테스트")
-    void getAllUserListWithLogout(){
+    void getAllUserListWithLogout() throws IOException {
         Method method = Method.GET;
         String path = "/user/list";
         String protocol = "HTTP/1.1";
@@ -159,13 +161,13 @@ class UserControllerTest {
         String name = "hello_abc";
         String email = "abc@abc.com";
 
-        UserService.getInstance().createUser(userId, password, name, email);
+        UserService.getInstance().createUser(new JoinUserDto(userId, password, name, email));
 
         userId = "cde";
         password = "456";
         name = "hello_cde";
         email = "cde@cde.com";
 
-        UserService.getInstance().createUser(userId, password, name, email);
+        UserService.getInstance().createUser(new JoinUserDto(userId, password, name, email));
     }
 }

@@ -16,30 +16,64 @@ import java.util.List;
 import java.util.Map;
 
 public class RequestParser {
+
     private static final Logger logger = LoggerFactory.getLogger(RequestParser.class);
+
+    private static Method method;
+    private static String path;
+    private static String protocol;
+
+    private static Map<String, String> parameters;
+    private static Map<String, String> headers;
+    private static Map<String, String> body;
+
+    private static String startLine;
+    private static List<String> headerLines;
+    private static String bodyData;
+
+    private static String rawLine;
+
+    private RequestParser(){
+
+    }
+    private static void init(){
+        method = null;
+        path = null;
+        protocol = null;
+
+        parameters = new HashMap<>();
+        headers = new HashMap<>();
+        body = new HashMap<>();
+
+        startLine = null;
+        headerLines = new ArrayList<>();
+        bodyData = null;
+
+        rawLine = null;
+    }
+
     public static HttpRequest getHttpRequestFromInput(BufferedReader br) throws IOException {
+        /*
+        Http의 Header 는
+        `Get /login.html?loginId=abc&password=123 HTTP/1.1
+        Host: localhost:8080
+        Connection: keep-alive
+        Accept: *
 
-        Method method = null;
-        String path = null;
-        String protocol = null;
+        data=hello
+        `
 
-        Map<String, String> parameters = new HashMap<>();
-        Map<String, String> headers = new HashMap<>();
-        Map<String, String> body = new HashMap<>();
+        이러한 형식을 띕니다. 따라서
+        첫 번째 라인에서 request의 method, 요청 url(path와 parameter), 프로토콜로 이루어져 있습니다.
+        두 번째 라인부터 EOF가 나올 때까지 Header 속성 값들이 Key: Value 형식으로 띄고 있으며
+        EOF 뒤에는 body 담긴 데이터를 확인할 수 있습니다.
 
-        String startLine = null;
-        List<String> headerLines = new ArrayList<>();
-        String bodyData = null;
+         */
 
-        String rawLine = null;
+        init();
 
+        // 첫 번째 라인은 3 개의 단어로 나누어 각 변수에 저장합니다.
         startLine = br.readLine();
-
-        while (true) {
-            rawLine = br.readLine();
-            if (rawLine == null || "".equals(rawLine)) break;
-            headerLines.add(rawLine);
-        }
 
         if (Strings.isNullOrEmpty(startLine))
             throw new RequestHandlingException("Header 입력이 비어있습니다.");
@@ -51,6 +85,7 @@ public class RequestParser {
 
         method = Method.valueOf(tokens[0]);
 
+        // url /index.html?loginId=abc&password=123에서 path는 /index.html로, ? 다음의 값들은 각각 key와 value 파싱해 map에 저장합니다.
         String[] urlTokens = tokens[1].split("\\?");
 
         path = urlTokens[0];
@@ -60,11 +95,19 @@ public class RequestParser {
 
         protocol = tokens[2];
 
+        // 헤더 부분은 key: value형식으로 되어있는 부분을 줄로 읽어온 다음, 각각 map에 저장합니다.
+        while (true) {
+            rawLine = br.readLine();
+            if (rawLine == null || "".equals(rawLine)) break;
+            headerLines.add(rawLine);
+        }
+
         headerLines.forEach(line -> {
             HttpRequestUtils.Pair pair = HttpRequestUtils.parseHeader(line);
             headers.put(pair.getKey(), URLDecoder.decode(pair.getValue(), StandardCharsets.UTF_8));
         });
 
+        // body는 없는 경우가 존재하기 때문에 있는 경우, 없는 경우를 try-catch를 사용해 저장합니다. 단 이때, 특수문자 등의 문제로 decoding이 필요하므로 처리해줍니다.
         try {
             bodyData = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
             body = HttpRequestUtils.parseQueryString(URLDecoder.decode(bodyData, StandardCharsets.UTF_8));
