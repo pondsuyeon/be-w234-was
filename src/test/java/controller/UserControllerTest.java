@@ -149,7 +149,7 @@ class UserControllerTest {
         HttpResponse httpResponse = UserController.getInstance().getAllUserList(httpRequest);
 
         assertEquals(httpResponse.getStatusCode(), StatusCode.FOUND);
-        assertTrue(httpRequest.getHeaders().get("Location").contains("/login.html"));
+        assertTrue(httpResponse.getHeaders().get("Location").contains("/login.html"));
 
     }
     void createUserBeforeTest(){
