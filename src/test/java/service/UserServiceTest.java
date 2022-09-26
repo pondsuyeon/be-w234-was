@@ -1,6 +1,8 @@
 package service;
 
 import db.Database;
+import dto.JoinUserDto;
+import dto.LoginUserDto;
 import exception.DuplicateUserException;
 import exception.LoginFailException;
 import exception.UserNotFoundException;
@@ -34,7 +36,7 @@ class UserServiceTest {
         String name = "hello_abc";
         String email = "abc@abc.com";
 
-        UserService.getInstance().createUser(userId, password, name, email);
+        UserService.getInstance().createUser(new JoinUserDto(userId, password, name, email));
     }
 
     @Test
@@ -48,7 +50,7 @@ class UserServiceTest {
         String name = "hello_abc";
         String email = "abc@abc.com";
 
-        assertThrows(DuplicateUserException.class, () -> UserService.getInstance().createUser(userId, password, name, email));
+        assertThrows(DuplicateUserException.class, () -> UserService.getInstance().createUser(new JoinUserDto(userId, password, name, email)));
 
     }
 
@@ -60,18 +62,18 @@ class UserServiceTest {
         String userId = "abc";
         String password = "123";
 
-        UserService.getInstance().login(userId, password);
+        UserService.getInstance().checkUserPassword(new LoginUserDto(userId, password));
     }
 
     @Test
-    @DisplayName("로그인 ID 실패 테스트, 등록된 ID가 없는 경우 UserNotFoundException을 반환한다")
+    @DisplayName("로그인 ID 실패 테스트, 등록된 ID가 없는 경우 LoginFailException을 반환한다")
     void loginWithNoId() {
 
         String userId = "abc";
         String password = "123";
 
-        assertThrows(UserNotFoundException.class, () ->
-        UserService.getInstance().login(userId, password));
+        assertThrows(LoginFailException.class, () ->
+        UserService.getInstance().checkUserPassword(new LoginUserDto(userId, password)));
     }
 
     @Test
@@ -84,7 +86,7 @@ class UserServiceTest {
         String password = "456";
 
         assertThrows(LoginFailException.class, () ->
-                UserService.getInstance().login(userId, password));
+                UserService.getInstance().checkUserPassword(new LoginUserDto(userId, password)));
     }
 
     @Test
@@ -108,13 +110,13 @@ class UserServiceTest {
         String name = "hello_abc";
         String email = "abc@abc.com";
 
-        UserService.getInstance().createUser(userId, password, name, email);
+        UserService.getInstance().createUser(new JoinUserDto(userId, password, name, email));
 
         userId = "cde";
         password = "456";
         name = "hello_cde";
         email = "cde@cde.com";
 
-        UserService.getInstance().createUser(userId, password, name, email);
+        UserService.getInstance().createUser(new JoinUserDto(userId, password, name, email));
     }
 }

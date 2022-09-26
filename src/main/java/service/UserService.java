@@ -1,11 +1,12 @@
 package service;
 
 import db.Database;
+import dto.JoinUserDto;
+import dto.JoinUserDto;
+import dto.LoginUserDto;
 import exception.DuplicateUserException;
 import exception.LoginFailException;
-import exception.UserNotFoundException;
 import model.User;
-import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,33 +25,30 @@ public class UserService {
         return instance;
     }
 
-    public User createUser(String userId, String password, String name, String email) {
+    public User createUser(JoinUserDto joinUserDto) {
 
-        User user = new User.Builder()
-                .userId(userId)
-                .password(password)
-                .name(name).email(email)
-                .build();
-
-        if (Database.findUserById(userId) != null) {
+        if (Database.findUserById(joinUserDto.getUserId()) != null) {
             throw new DuplicateUserException("ID가 중복되었습니다.");
         }
+
+        User user = new User.Builder()
+                .userId(joinUserDto.getUserId())
+                .password(joinUserDto.getPassword())
+                .name(joinUserDto.getName())
+                .email(joinUserDto.getEmail())
+                .build();
 
         Database.addUser(user);
 
         return user;
     }
 
-    public boolean login(String userId, String password) {
+    public boolean checkUserPassword(LoginUserDto loginUserDto) {
 
-        User user = Database.findUserById(userId);
+        User savedUser = Database.findUserById(loginUserDto.getUserId());
 
-        if (user == null) {
-            throw new UserNotFoundException("일치하는 사용자 ID가 없습니다.");
-        }
-
-        if (!user.getPassword().equals(password)) {
-            throw new LoginFailException("ID와 Password가 일치하지 않습니다.");
+        if (savedUser == null || !savedUser.getPassword().equals(loginUserDto.getPassword())) {
+            throw new LoginFailException("Id와 Password를 다시 확인해주세요.");
         }
 
         return true;
@@ -64,4 +62,5 @@ public class UserService {
     public List<User> getUserList() {
         return new ArrayList<>(Database.findAll());
     }
+
 }

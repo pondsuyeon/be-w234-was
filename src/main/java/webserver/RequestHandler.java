@@ -40,7 +40,8 @@ public class RequestHandler implements Runnable {
 
         HttpResponse httpResponse = null;
 
-        if (httpRequest.getPath().startsWith("/user")) {
+        String path = httpRequest.getPath();
+        if (path.startsWith("/user")) {
             httpResponse = UserController.getInstance().process(httpRequest);
         }
 
