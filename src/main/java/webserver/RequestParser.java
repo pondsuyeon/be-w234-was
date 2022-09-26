@@ -8,6 +8,8 @@ import util.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,18 +56,18 @@ public class RequestParser {
         path = urlTokens[0];
 
         if (urlTokens.length > 1)
-            parameters = HttpRequestUtils.parseQueryString(urlTokens[1]);
+            parameters = HttpRequestUtils.parseQueryString(URLDecoder.decode(urlTokens[1], StandardCharsets.UTF_8));
 
         protocol = tokens[2];
 
         headerLines.forEach(line -> {
             HttpRequestUtils.Pair pair = HttpRequestUtils.parseHeader(line);
-            headers.put(pair.getKey(), pair.getValue());
+            headers.put(pair.getKey(), URLDecoder.decode(pair.getValue(), StandardCharsets.UTF_8));
         });
 
         try {
             bodyData = IOUtils.readData(br, Integer.parseInt(headers.get("Content-Length")));
-            body = HttpRequestUtils.parseQueryString(bodyData);
+            body = HttpRequestUtils.parseQueryString(URLDecoder.decode(bodyData, StandardCharsets.UTF_8));
 
         } catch (Exception e) {
 
