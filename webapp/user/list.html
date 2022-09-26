@@ -82,13 +82,31 @@
                     <th>#</th> <th>사용자 아이디</th> <th>이름</th> <th>이메일</th><th></th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                    <th scope="row">1</th> <td>javajigi</td> <td>자바지기</td> <td>javajigi@sample.net</td><td><a href="#" class="btn btn-success" role="button">수정</a></td>
-                </tr>
-                <tr>
-                    <th scope="row">2</th> <td>slipp</td> <td>슬립</td> <td>slipp@sample.net</td><td><a href="#" class="btn btn-success" role="button">수정</a></td>
-                </tr>
+              <tbody id="user_table_body">
+              <script>
+
+                  fetch("/user/list", {
+                      method: "GET",
+                      headers: {
+                          "Content-Type": "application/json",
+                      },
+                  })
+                      .then((res) =>res.json())
+                      .then((data => {
+                          let html = "";
+                          data.forEach((user, index) => {
+                              html += `<tr>
+                                  <th scope="row">${index + 1}</th>
+                                  <td>${user.userId}</td>
+                                  <td>${user.name}</td>
+                                  <td>${user.email}</td>
+                                  <td><a href="#" class="btn btn-success" role="button">수정</a></td>
+                              </tr>`;
+                          })
+
+                          document.getElementById("user_table_body").innerHTML = html;
+                      }));
+              </script>
               </tbody>
           </table>
         </div>
