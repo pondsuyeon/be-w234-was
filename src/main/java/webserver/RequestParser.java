@@ -19,39 +19,6 @@ public class RequestParser {
 
     private static final Logger logger = LoggerFactory.getLogger(RequestParser.class);
 
-    private static Method method;
-    private static String path;
-    private static String protocol;
-
-    private static Map<String, String> parameters;
-    private static Map<String, String> headers;
-    private static Map<String, String> body;
-
-    private static String startLine;
-    private static List<String> headerLines;
-    private static String bodyData;
-
-    private static String rawLine;
-
-    private RequestParser(){
-
-    }
-    private static void init(){
-        method = null;
-        path = null;
-        protocol = null;
-
-        parameters = new HashMap<>();
-        headers = new HashMap<>();
-        body = new HashMap<>();
-
-        startLine = null;
-        headerLines = new ArrayList<>();
-        bodyData = null;
-
-        rawLine = null;
-    }
-
     public static HttpRequest getHttpRequestFromInput(BufferedReader br) throws IOException {
         /*
         Http의 Header 는
@@ -70,7 +37,19 @@ public class RequestParser {
 
          */
 
-        init();
+        Method method = null;
+        String path = null;
+        String protocol = null;
+
+        Map<String, String> parameters = new HashMap<>();
+        Map<String, String> headers = new HashMap<>();
+        Map<String, String> body = new HashMap<>();
+
+        String startLine = null;
+        List<String> headerLines = new ArrayList<>();
+        String bodyData = null;
+
+        String rawLine = null;
 
         // 첫 번째 라인은 3 개의 단어로 나누어 각 변수에 저장합니다.
         startLine = br.readLine();
@@ -102,10 +81,10 @@ public class RequestParser {
             headerLines.add(rawLine);
         }
 
-        headerLines.forEach(line -> {
+        for (String line : headerLines) {
             HttpRequestUtils.Pair pair = HttpRequestUtils.parseHeader(line);
             headers.put(pair.getKey(), URLDecoder.decode(pair.getValue(), StandardCharsets.UTF_8));
-        });
+        }
 
         // body는 없는 경우가 존재하기 때문에 있는 경우, 없는 경우를 try-catch를 사용해 저장합니다. 단 이때, 특수문자 등의 문제로 decoding이 필요하므로 처리해줍니다.
         try {
