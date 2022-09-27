@@ -1,13 +1,10 @@
 package service;
 
-import db.Database;
 import dto.JoinUserDto;
 import dto.LoginUserDto;
 import exception.DuplicateUserException;
 import exception.LoginFailException;
-import exception.UserNotFoundException;
 import model.User;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,12 +17,8 @@ class UserServiceTest {
 
     @BeforeEach
     void deleteUser(){
-        try {
             UserService.getInstance().deleteUser("abc");
             UserService.getInstance().deleteUser("cde");
-        }catch (Exception e) {
-
-        }
     }
 
     @Test
@@ -119,4 +112,5 @@ class UserServiceTest {
 
         UserService.getInstance().createUser(new JoinUserDto(userId, password, name, email));
     }
+
 }

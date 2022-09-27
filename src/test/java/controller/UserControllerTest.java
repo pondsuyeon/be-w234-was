@@ -38,8 +38,11 @@ class UserControllerTest {
         Map<String, String> parameters = new HashMap<>();
         Map<String, String> headers = new HashMap<>();
         Map<String, String> body = new HashMap<>();
+
         body.put("userId", "abc");
         body.put("password", "123");
+        body.put("name", "hello_abc");
+        body.put("email", "abc@abc.com");
 
         HttpRequest httpRequest = new HttpRequest(method, path, protocol, parameters, headers, body);
 

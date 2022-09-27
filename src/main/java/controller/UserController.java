@@ -3,9 +3,6 @@ package controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dto.JoinUserDto;
 import dto.LoginUserDto;
-import exception.LoginFailException;
-import exception.UserNotFoundException;
-import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.UserService;
@@ -57,7 +54,7 @@ public class UserController {
         String path = httpRequest.getPath().replaceFirst("/user", "");
 
         switch (path){
-            case "list": {
+            case "/list": {
                 httpResponse = getAllUserList(httpRequest);
                 break;
             }
@@ -95,7 +92,7 @@ public class UserController {
 
         UserService userService = UserService.getInstance();
 
-        User user = userService.createUser(joinUserDto);
+        userService.createUser(joinUserDto);
 
         return new HttpResponse.Builder()
                 .statusCode(StatusCode.FOUND)
