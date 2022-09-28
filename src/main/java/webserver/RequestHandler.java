@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+import controller.PostController;
 import controller.StaticFileController;
 import controller.UserController;
 import org.slf4j.Logger;
@@ -43,6 +44,8 @@ public class RequestHandler implements Runnable {
         String path = httpRequest.getPath();
         if (path.startsWith("/user")) {
             httpResponse = UserController.getInstance().process(httpRequest);
+        }else if (path.startsWith("/post")){
+            httpResponse = PostController.getInstance().process(httpRequest);
         }
 
         if (httpResponse != null)
